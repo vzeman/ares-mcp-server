@@ -1,0 +1,22 @@
+[project]
+name = "ares-mcp-server"
+version = "0.1.0"
+description = "MCP server for Czech ARES (Administrative Registry of Economic Subjects) API"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "ARES MCP Server", email = "contact@example.com" }
+]
+dependencies = [
+    "mcp>=1.0.0",
+    "httpx>=0.24.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+ares-mcp-server = "ares_mcp_server.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
