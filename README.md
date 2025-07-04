@@ -1,10 +1,47 @@
-# ARES MCP Server v3
+# ARES MCP Server
 
-A Model Context Protocol (MCP) server that provides access to the Czech ARES (Administrativní registr ekonomických subjektů) API v3.
+A Model Context Protocol (MCP) server that provides access to the Czech ARES (Administrativní registr ekonomických subjektů) API - the official business registry of the Czech Republic.
+
+## Demo
+
+See the ARES MCP Server in action within Claude Desktop:
+
+![ARES MCP Server Demo](docs/images/ares-mcp-demo.gif)
+
+The demo shows:
+- 🔍 Searching for companies by name (e.g., "AiMingle")
+- 📋 Getting detailed company information by IČO
+- ✅ Validating IČO numbers
+- 🏢 Searching in specific registries
+- 📊 Using advanced filters (legal form, CZ-NACE codes, etc.)
+
+## Quick Start
+
+1. **Install the server:**
+   ```bash
+   git clone https://github.com/yourusername/ares-mcp-server.git
+   cd ares-mcp-server
+   pip install -e .
+   ```
+
+2. **Add to Claude Desktop config:**
+   ```json
+   {
+     "mcpServers": {
+       "ares": {
+         "command": "python3",
+         "args": ["-m", "ares_mcp_server.server"],
+         "cwd": "/path/to/ares-mcp-server"
+       }
+     }
+   }
+   ```
+
+3. **Restart Claude Desktop and start searching Czech companies!**
 
 ## Features
 
-- Full implementation of ARES API v3 endpoints
+- Full implementation of ARES API endpoints
 - Complex search with multiple filters (IČO, name, address, legal form, CZ-NACE, etc.)
 - Registry-specific searches (Public Registry, Trade Registry, Schools, etc.)
 - Built-in rate limiting
@@ -147,42 +184,66 @@ Search standardized addresses
 ### 8. vyhledat_notifikace
 Search notification batches
 
-## Example Usage in Claude
+## Example Usage in Claude Desktop
 
-### Basic company search by name:
+Once configured, you can interact with ARES data directly in Claude Desktop. Here are some common use cases:
+
+### 🔍 Basic Company Search
+Ask Claude: "Search for companies with name containing 'Microsoft' in ARES"
+
+Claude will use:
 ```
-Use vyhledat_ekonomicke_subjekty with:
+vyhledat_ekonomicke_subjekty with:
 - obchodniJmeno: "Microsoft"
 - pocet: 10
 ```
 
-### Search by multiple IČOs:
+### 📊 Get Company Details
+Ask Claude: "Get details for company with IČO 26168685"
+
+Claude will use:
 ```
-Use vyhledat_ekonomicke_subjekty with:
+najit_ekonomicky_subjekt with:
+- ico: "26168685"
+```
+
+### ✅ Validate IČO
+Ask Claude: "Is IČO 26168685 valid?"
+
+Claude will use:
+```
+validovat_ico with:
+- ico: "26168685"
+```
+
+### 🏭 Industry-Specific Search
+Ask Claude: "Find all restaurants in Prague"
+
+Claude will use:
+```
+vyhledat_ekonomicke_subjekty with:
+- czNace: ["56"]  # Restaurants and food service
+- sidlo: { "nazevObce": "Praha" }
+- pocet: 50
+```
+
+### 📋 Search Multiple Companies
+Ask Claude: "Get info for companies with IČO 26168685 and 00000019"
+
+Claude will use:
+```
+vyhledat_ekonomicke_subjekty with:
 - ico: ["26168685", "00000019"]
 ```
 
-### Complex search example:
-```
-Use vyhledat_ekonomicke_subjekty with:
-- obchodniJmeno: "restaurant"
-- czNace: ["56"]
-- pravniForma: ["112"]
-- pocet: 50
-- razeni: ["OBCHODNI_JMENO"]
-```
+### 🏢 Registry-Specific Search
+Ask Claude: "Search for software companies in the trade registry"
 
-### Search in specific registry:
+Claude will use:
 ```
-Use vyhledat_v_registru with:
+vyhledat_v_registru with:
 - registry: "rzp"
 - obchodniJmeno: "software"
-```
-
-### Get company details:
-```
-Use najit_ekonomicky_subjekt with:
-- ico: "26168685"
 ```
 
 ## Development

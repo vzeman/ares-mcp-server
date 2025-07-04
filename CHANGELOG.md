@@ -2,6 +2,11 @@
 
 ## [0.3.2] - 2025-07-04
 
+### Added
+- Demo GIF showing ARES MCP Server in action within Claude Desktop
+- Quick Start section in README for easier setup
+- Enhanced example usage with emoji icons and clearer descriptions
+
 ### Changed
 - Consolidated v3 implementation as the main version
 - Removed `_v3` suffix from all files and classes
@@ -10,6 +15,7 @@
   - `AresMcpServerV3` → `AresMcpServer`
   - `create_ares_tools_v3` → `create_ares_tools`
 - Fixed Pydantic deprecation warning (max_items → max_length)
+- Improved README structure with better visual hierarchy
 
 ## [0.3.1] - 2025-07-04
 
