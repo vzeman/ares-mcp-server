@@ -9,6 +9,7 @@ from mcp.server import Server
 from mcp.server.models import InitializationOptions
 from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
 
+from . import __version__
 from .api_client import AresApiClient
 from .tools import create_ares_tools
 
@@ -117,7 +118,7 @@ class AresMcpServer:
                 write_stream,
                 InitializationOptions(
                     server_name="ares-mcp-server",
-                    server_version="0.3.2",
+                    server_version=__version__,
                     capabilities={}
                 )
             )
