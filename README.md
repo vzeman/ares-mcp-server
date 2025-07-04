@@ -1,15 +1,15 @@
-# ARES MCP Server
+# ARES MCP Server v3
 
-A Model Context Protocol (MCP) server that provides access to the Czech ARES (Administrativní registr ekonomických subjektů) API.
+A Model Context Protocol (MCP) server that provides access to the Czech ARES (Administrativní registr ekonomických subjektů) API v3.
 
 ## Features
 
-- Search for economic subjects by IČO, name, or address
-- Get detailed information about specific companies
-- Retrieve business register extracts
-- Validate IČO (Czech company identification numbers)
-- Built-in rate limiting to respect API constraints
-- Full async/await support
+- Full implementation of ARES API v3 endpoints
+- Complex search with multiple filters (IČO, name, address, legal form, CZ-NACE, etc.)
+- Registry-specific searches (Public Registry, Trade Registry, Schools, etc.)
+- Built-in rate limiting
+- Optional authentication support
+- Proper Czech naming following the API documentation
 
 ## Prerequisites
 
@@ -18,108 +18,64 @@ A Model Context Protocol (MCP) server that provides access to the Czech ARES (Ad
 
 ## Installation
 
-### Option 1: Automated Setup (Recommended)
-
-The easiest way to get started is using the automated setup script:
-
-#### macOS/Linux
-```bash
-git clone https://github.com/yourusername/ares-mcp-server.git
-cd ares-mcp-server
-./run.sh
-```
-
-#### Windows
-```bash
-git clone https://github.com/yourusername/ares-mcp-server.git
-cd ares-mcp-server
-run.bat
-```
-
-The script will automatically:
-- Check Python version
-- Create virtual environment
-- Install all dependencies
-- Create configuration file
-- Optionally start the server
-
-### Option 2: Manual Setup
-
-If you prefer manual installation:
-
-#### 1. Clone the Repository
+### Quick Install
 
 ```bash
+# Clone the repository
 git clone https://github.com/yourusername/ares-mcp-server.git
 cd ares-mcp-server
+
+# Run automated setup
+./run.sh  # macOS/Linux
+# or
+run.bat   # Windows
 ```
 
-#### 2. Create Virtual Environment
-
-It's recommended to use a virtual environment to avoid conflicts with system packages:
+### Manual Installation
 
 ```bash
 # Create virtual environment
 python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Activate virtual environment
-# On macOS/Linux:
-source venv/bin/activate
-
-# On Windows:
-venv\Scripts\activate
-```
-
-#### 3. Install Dependencies
-
-```bash
-# Install all requirements
+# Install dependencies
 pip install -r requirements.txt
 
-# Or install the package in development mode
-pip install -e .
+# Create configuration
+cp .env.example .env
 ```
 
-## Running the Server
+## Configuration
 
-### Quick Start
-
-The easiest way to run the server:
+Configure the server using environment variables in `.env`:
 
 ```bash
-# macOS/Linux
-./run.sh
+# Rate limiting (default: 100 requests per 60 seconds)
+ARES_RATE_LIMIT_REQUESTS=100
+ARES_RATE_LIMIT_WINDOW=60
 
-# Windows
-run.bat
+# Optional authentication token
+ARES_AUTH_TOKEN=your_token_here
+
+# Logging level
+LOG_LEVEL=INFO
 ```
 
-### Manual Start
+## Claude Desktop Configuration
 
-To run the server directly:
+Add to your Claude Desktop configuration file:
 
-```bash
-# Make sure virtual environment is activated
-source venv/bin/activate  # On macOS/Linux
-# or
-venv\Scripts\activate  # On Windows
+### macOS
+`~/Library/Application Support/Claude/claude_desktop_config.json`
 
-# Run the server
-python -m ares_mcp_server.server
-```
-
-### Integration with Claude Desktop
-
-Add the server to your Claude Desktop configuration:
-
-#### macOS
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+### Windows
+`%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "ares": {
-      "command": "/path/to/ares-mcp-server/venv/bin/python",
+      "command": "python3",
       "args": ["-m", "ares_mcp_server.server"],
       "cwd": "/path/to/ares-mcp-server"
     }
@@ -127,209 +83,158 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-#### Windows
-Edit `%APPDATA%\Claude\claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "ares": {
-      "command": "C:\\path\\to\\ares-mcp-server\\venv\\Scripts\\python.exe",
-      "args": ["-m", "ares_mcp_server.server"],
-      "cwd": "C:\\path\\to\\ares-mcp-server"
-    }
-  }
-}
-```
-
-**Note**: Make sure to use the full path to the Python executable in your virtual environment.
-
-## Configuration
-
-The server can be configured using environment variables. Create a `.env` file in the project root:
-
-```bash
-# Copy the example configuration
-cp .env.example .env
-
-# Edit .env with your preferences
-```
-
-Available configuration options:
-
-- `ARES_RATE_LIMIT_REQUESTS`: Maximum requests per time window (default: 100)
-- `ARES_RATE_LIMIT_WINDOW`: Time window in seconds (default: 60)
-- `ARES_REQUEST_TIMEOUT`: Request timeout in seconds (default: 30)
-- `LOG_LEVEL`: Logging level - DEBUG, INFO, WARNING, ERROR (default: INFO)
-
 ## Available Tools
 
-### ares_search_subject
-Search for economic subjects in the ARES registry.
+### 1. vyhledat_ekonomicke_subjekty
+**Main search tool** - Search economic entities using complex filters
 
 Parameters:
-- `ico` (optional): Company identification number (8 digits)
-- `name` (optional): Company name or part of it
-- `address` (optional): Company address or part of it
+- `start` (optional): Starting position (default: 0)
+- `pocet` (optional): Number of results (default: 20, max: 200)
+- `razeni` (optional): Sort order array ["ICO", "OBCHODNI_JMENO_DESC", etc.]
+- `ico` (optional): Array of IČO numbers to search
+- `obchodniJmeno` (optional): Business name
+- `sidlo` (optional): Address filter object
+  - `kodCastiObce`: District code
+  - `kodObce`: Municipality code
+  - `textovaAdresa`: Text address search
+  - etc.
+- `pravniForma` (optional): Array of legal form codes
+- `financniUrad` (optional): Array of tax office codes
+- `czNace` (optional): Array of CZ-NACE activity codes (max 5)
 
-At least one parameter must be provided.
-
-### ares_get_subject
-Get detailed information about a specific economic subject.
-
-Parameters:
-- `ico` (required): Company identification number (8 digits)
-
-### ares_get_extract
-Get business register extract for a company.
-
-Parameters:
-- `ico` (required): Company identification number (8 digits)
-- `extract_type` (optional): Type of extract - "standard" (default), "complete", or "basic"
-
-### ares_validate_ico
-Validate if IČO is correctly formatted and exists in ARES.
+### 2. najit_ekonomicky_subjekt
+Get detailed information about a specific economic entity
 
 Parameters:
-- `ico` (required): Company identification number to validate
+- `ico` (required): IČO number (8 digits)
+
+### 3. vyhledat_v_registru
+Search in a specific registry
+
+Parameters:
+- `registry` (required): Registry code
+  - `vr`: Veřejné rejstříky (Public Registers)
+  - `res`: Registr ekonomických subjektů (Economic Entities)
+  - `rzp`: Registr živnostenského podnikání (Trade Licensing)
+  - `nrpzs`: Národní registr poskytovatelů zdravotních služeb (Healthcare)
+  - `rpsh`: Registr politických stran a hnutí (Political Parties)
+  - `rcns`: Registr církví a náboženských společenství (Churches)
+  - `szr`: Společný zemědělský registr (Agricultural)
+  - `rs`: Registr škol (Schools)
+  - `ceu`: Centrální evidence úpadců (Bankrupts)
+- Plus same search parameters as main search
+
+### 4. najit_v_registru
+Get entity from specific registry by IČO
+
+Parameters:
+- `registry` (required): Registry code
+- `ico` (required): IČO number
+
+### 5. validovat_ico
+Validate IČO format and check existence
+
+Parameters:
+- `ico` (required): IČO to validate
+
+### 6. vyhledat_ciselniky
+Search codebooks and nomenclatures
+
+### 7. vyhledat_adresy
+Search standardized addresses
+
+### 8. vyhledat_notifikace
+Search notification batches
 
 ## Example Usage in Claude
 
-Once configured, you can use the ARES tools in Claude:
-
+### Basic company search by name:
 ```
-Search for a company by name:
-Use ares_search_subject with name "Microsoft"
+Use vyhledat_ekonomicke_subjekty with:
+- obchodniJmeno: "Microsoft"
+- pocet: 10
+```
 
-Get details about a specific company:
-Use ares_get_subject with ico "12345678"
+### Search by multiple IČOs:
+```
+Use vyhledat_ekonomicke_subjekty with:
+- ico: ["26168685", "00000019"]
+```
 
-Validate a company ID:
-Use ares_validate_ico with ico "12345678"
+### Complex search example:
+```
+Use vyhledat_ekonomicke_subjekty with:
+- obchodniJmeno: "restaurant"
+- czNace: ["56"]
+- pravniForma: ["112"]
+- pocet: 50
+- razeni: ["OBCHODNI_JMENO"]
+```
+
+### Search in specific registry:
+```
+Use vyhledat_v_registru with:
+- registry: "rzp"
+- obchodniJmeno: "software"
+```
+
+### Get company details:
+```
+Use najit_ekonomicky_subjekt with:
+- ico: "26168685"
 ```
 
 ## Development
 
-### Running Tests
-
-```bash
-# Activate virtual environment
-source venv/bin/activate  # On macOS/Linux
-
-# Run tests with pytest
-pytest tests/
-
-# Run tests with coverage
-pytest tests/ --cov=ares_mcp_server --cov-report=html
-
-# Run specific test file
-pytest tests/test_api_client.py
-```
-
-### Code Quality
-
-```bash
-# Format code with black
-black ares_mcp_server/
-
-# Check code style with flake8
-flake8 ares_mcp_server/
-
-# Sort imports with isort
-isort ares_mcp_server/
-
-# Type checking with mypy
-mypy ares_mcp_server/
-```
-
-### Running Examples
-
-```bash
-# Activate virtual environment
-source venv/bin/activate
-
-# Run the example script
-python examples/usage_example.py
-```
-
-## Project Structure
-
+### Project Structure
 ```
 ares-mcp-server/
 ├── ares_mcp_server/
 │   ├── __init__.py
-│   ├── server.py       # Main MCP server implementation
-│   ├── api_client.py   # ARES API client with rate limiting
-│   └── tools.py        # MCP tool definitions
+│   ├── server.py           # Entry point
+│   ├── server_v3.py        # Main server implementation
+│   ├── api_client_v3.py    # ARES API v3 client
+│   └── tools_v3.py         # Tool definitions
 ├── tests/
-│   └── test_api_client.py
 ├── examples/
-│   └── usage_example.py
-├── .env.example        # Example configuration
-├── .gitignore
-├── pyproject.toml      # Package configuration
-├── requirements.txt    # Python dependencies
+├── requirements.txt
+├── pyproject.toml
 └── README.md
 ```
 
-## Troubleshooting
+### Running Tests
+```bash
+source venv/bin/activate
+pytest tests/
+```
 
-### Common Issues
+## API Documentation
 
-1. **ImportError: No module named 'mcp'**
-   - Make sure you've activated the virtual environment
-   - Run `pip install -r requirements.txt`
+This server implements the official ARES API. For detailed API documentation, see:
+- [ARES Swagger UI](https://ares.gov.cz/swagger-ui/)
+- [ARES Website](https://ares.gov.cz/)
+- API Base URL: `https://ares.gov.cz/ekonomicke-subjekty-v-be/rest`
 
-2. **Rate limit errors**
-   - The server implements automatic rate limiting
-   - Adjust `ARES_RATE_LIMIT_REQUESTS` in `.env` if needed
+## Changelog
 
-3. **Connection timeouts**
-   - Check your internet connection
-   - Increase `ARES_REQUEST_TIMEOUT` in `.env`
-
-4. **Virtual environment not found**
-   - Ensure you've created it: `python3 -m venv venv`
-   - Check the path in Claude Desktop configuration
-
-## API Rate Limiting
-
-The ARES API has usage limits. This server implements:
-
-- Automatic rate limiting (default: 100 requests per minute)
-- Request queuing when limits are reached
-- Graceful error handling for API errors
-
-## Error Handling
-
-The server provides comprehensive error handling:
-
-- HTTP errors are caught and formatted with details
-- Network timeouts are handled gracefully
-- Invalid parameters return descriptive error messages
-- All errors are returned in JSON format
+### v0.3.0 (2025-07-04)
+- Complete rebuild based on ARES API v3 specification
+- Tool names now match API endpoints (Czech names)
+- Proper parameter structure matching API documentation
+- Support for all search filters including address components
+- Added registry-specific search endpoints
+- Added utility endpoints (codebooks, addresses, notifications)
 
 ## License
 
-This project is licensed under the MIT License.
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests (`pytest tests/`)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+MIT License
 
 ## Support
 
 For issues or questions:
 - Create an issue on GitHub
-- Check the ARES API documentation at https://ares.gov.cz/swagger-ui/
+- Check the ARES API documentation
 
 ## Acknowledgments
 

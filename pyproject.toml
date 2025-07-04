@@ -1,7 +1,7 @@
 [project]
 name = "ares-mcp-server"
-version = "0.1.0"
-description = "MCP server for Czech ARES (Administrative Registry of Economic Subjects) API"
+version = "0.3.2"
+description = "MCP server for Czech ARES (Administrative Registry of Economic Subjects) API v3"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [

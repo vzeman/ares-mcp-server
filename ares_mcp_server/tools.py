@@ -8,78 +8,222 @@ def create_ares_tools() -> List[Tool]:
     """Create and return ARES API tools for MCP."""
     
     return [
+        # Main search tool
         Tool(
-            name="ares_search_subject",
-            description="Search for economic subjects in Czech ARES registry",
+            name="vyhledat_ekonomicke_subjekty",
+            description="Vyhledání seznamu ekonomických subjektů ARES podle komplexního filtru (Search economic entities using complex filter)",
             inputSchema={
                 "type": "object",
                 "properties": {
+                    "start": {
+                        "type": "integer",
+                        "description": "Starting position (default: 0)",
+                        "minimum": 0
+                    },
+                    "pocet": {
+                        "type": "integer",
+                        "description": "Number of results (default: 20, max: 200)",
+                        "minimum": 0,
+                        "maximum": 200
+                    },
+                    "razeni": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Sort order: ICO, ICO_DESC, OBCHODNI_JMENO, OBCHODNI_JMENO_DESC"
+                    },
                     "ico": {
-                        "type": "string",
-                        "description": "Company identification number (IČO) - 8 digits"
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of IČO numbers to search"
                     },
-                    "name": {
+                    "obchodniJmeno": {
                         "type": "string",
-                        "description": "Company name or part of it"
+                        "description": "Business name to search"
                     },
-                    "address": {
-                        "type": "string",
-                        "description": "Company address or part of it"
+                    "sidlo": {
+                        "type": "object",
+                        "description": "Address filter",
+                        "properties": {
+                            "kodCastiObce": {"type": "integer"},
+                            "kodSpravnihoObvodu": {"type": "integer"},
+                            "kodMestskeCastiObvodu": {"type": "integer"},
+                            "kodUlice": {"type": "integer"},
+                            "cisloDomovni": {"type": "integer"},
+                            "kodObce": {"type": "integer"},
+                            "cisloOrientacni": {"type": "integer"},
+                            "cisloOrientacniPismeno": {"type": "string", "maxLength": 1},
+                            "textovaAdresa": {"type": "string"}
+                        }
+                    },
+                    "pravniForma": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Legal form codes"
+                    },
+                    "financniUrad": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Tax office codes"
+                    },
+                    "czNace": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "CZ-NACE economic activity codes (max 5)",
+                        "maxItems": 5
                     }
-                },
-                "anyOf": [
-                    {"required": ["ico"]},
-                    {"required": ["name"]},
-                    {"required": ["address"]}
-                ]
+                }
             }
         ),
+        
+        # Get entity by ICO
         Tool(
-            name="ares_get_subject",
-            description="Get detailed information about a specific economic subject by IČO",
+            name="najit_ekonomicky_subjekt",
+            description="Vyhledání ekonomického subjektu ARES podle zadaného IČA (Get economic entity by ICO)",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "ico": {
                         "type": "string",
-                        "description": "Company identification number (IČO) - 8 digits"
+                        "description": "IČO (8 digits)",
+                        "pattern": "^[0-9]{8}$"
                     }
                 },
                 "required": ["ico"]
             }
         ),
+        
+        # Registry search
         Tool(
-            name="ares_get_extract",
-            description="Get business register extract for a company",
+            name="vyhledat_v_registru",
+            description="Vyhledání v konkrétním registru (Search in specific registry)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "registry": {
+                        "type": "string",
+                        "description": "Registry code",
+                        "enum": ["vr", "res", "rzp", "nrpzs", "rpsh", "rcns", "szr", "rs", "ceu"]
+                    },
+                    "start": {
+                        "type": "integer",
+                        "description": "Starting position",
+                        "minimum": 0
+                    },
+                    "pocet": {
+                        "type": "integer",
+                        "description": "Number of results",
+                        "minimum": 0,
+                        "maximum": 200
+                    },
+                    "razeni": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Sort order"
+                    },
+                    "ico": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of IČO numbers"
+                    },
+                    "obchodniJmeno": {
+                        "type": "string",
+                        "description": "Business name"
+                    },
+                    "sidlo": {
+                        "type": "object",
+                        "description": "Address filter"
+                    },
+                    "pravniForma": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Legal form codes"
+                    }
+                },
+                "required": ["registry"]
+            }
+        ),
+        
+        # Get from registry by ICO
+        Tool(
+            name="najit_v_registru",
+            description="Získání subjektu z konkrétního registru podle IČO (Get entity from specific registry by ICO)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "registry": {
+                        "type": "string",
+                        "description": "Registry code: vr (Public), res (Economic), rzp (Trade), rpsh (Political), rcns (Church), szr (Agricultural), rs (School), ceu (Bankrupt)",
+                        "enum": ["vr", "res", "rzp", "rpsh", "rcns", "szr", "rs", "ceu"]
+                    },
+                    "ico": {
+                        "type": "string",
+                        "description": "IČO (8 digits)",
+                        "pattern": "^[0-9]{8}$"
+                    }
+                },
+                "required": ["registry", "ico"]
+            }
+        ),
+        
+        # Validate ICO
+        Tool(
+            name="validovat_ico",
+            description="Ověření validity IČO (Validate ICO format and existence)",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "ico": {
                         "type": "string",
-                        "description": "Company identification number (IČO) - 8 digits"
-                    },
-                    "extract_type": {
-                        "type": "string",
-                        "description": "Type of extract: 'standard' (default), 'complete', or 'basic'",
-                        "enum": ["standard", "complete", "basic"],
-                        "default": "standard"
+                        "description": "IČO to validate"
                     }
                 },
                 "required": ["ico"]
             }
         ),
+        
+        # Search codebooks
         Tool(
-            name="ares_validate_ico",
-            description="Validate if IČO is correctly formatted and exists in ARES",
+            name="vyhledat_ciselniky",
+            description="Vyhledání v číselnících a názvnících (Search codebooks and nomenclatures)",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "ico": {
-                        "type": "string",
-                        "description": "Company identification number (IČO) to validate"
-                    }
-                },
-                "required": ["ico"]
+                    "start": {"type": "integer", "minimum": 0},
+                    "pocet": {"type": "integer", "minimum": 0, "maximum": 200},
+                    "kod": {"type": "string"},
+                    "nazev": {"type": "string"}
+                }
+            }
+        ),
+        
+        # Search addresses
+        Tool(
+            name="vyhledat_adresy",
+            description="Vyhledání standardizovaných adres (Search standardized addresses)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "start": {"type": "integer", "minimum": 0},
+                    "pocet": {"type": "integer", "minimum": 0, "maximum": 200},
+                    "obec": {"type": "string"},
+                    "castObce": {"type": "string"},
+                    "ulice": {"type": "string"}
+                }
+            }
+        ),
+        
+        # Search notifications
+        Tool(
+            name="vyhledat_notifikace",
+            description="Vyhledání notifikačních dávek (Search notification batches)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "start": {"type": "integer", "minimum": 0},
+                    "pocet": {"type": "integer", "minimum": 0, "maximum": 200},
+                    "datumOd": {"type": "string", "format": "date"},
+                    "datumDo": {"type": "string", "format": "date"}
+                }
             }
         )
     ]

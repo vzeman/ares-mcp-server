@@ -18,20 +18,29 @@ async def main():
         print(result)
         print()
         
-        # Example 2: Validate IČO
-        print("2. Validating IČO 00000019:")
-        result = await client.validate_ico("00000019")
-        print(result)
-        print()
-        
-        # Example 3: Search by IČO
-        print("3. Searching for company with IČO 26168685 (if exists):")
+        # Example 2: Search by ICO
+        print("2. Searching for company with IČO 26168685:")
         result = await client.search_subject(ico="26168685")
         print(result)
         print()
         
-        # Example 4: Get detailed information (will fail if IČO doesn't exist)
-        print("4. Getting details for IČO 26168685:")
+        # Example 3: Advanced search with multiple ICOs
+        print("3. Advanced search with multiple ICOs:")
+        result = await client.search_advanced({
+            "ico": ["26168685", "00000019"],
+            "count": 10
+        })
+        print(result)
+        print()
+        
+        # Example 4: Validate IČO
+        print("4. Validating IČO 00000019:")
+        result = await client.validate_ico("00000019")
+        print(result)
+        print()
+        
+        # Example 5: Get detailed information (will fail if IČO doesn't exist)
+        print("5. Getting details for IČO 26168685:")
         result = await client.get_subject("26168685")
         result_data = json.loads(result)
         if "error" not in result_data:
