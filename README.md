@@ -2,6 +2,11 @@
 
 A Model Context Protocol (MCP) server that provides access to the Czech ARES (Administrativní registr ekonomických subjektů) API - the official business registry of the Czech Republic.
 
+## Custom MCP Server Development
+We develop custom MCP Servers for our customers. If you need your own MCP server for your system similar to this MCP server, please contact us (https://www.flowhunt.io/contact/).
+Read more how we develop MCP Servers for our customers: https://www.flowhunt.io/services/mcp-server-development/
+
+
 ## Demo
 
 See the ARES MCP Server in action within Claude Desktop:
